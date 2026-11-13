@@ -4,6 +4,7 @@ import { Link, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { Navbar } from './components/Navbar';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { PublicNavbar } from './components/PublicNavbar';
+import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import { clearSession, getSession } from './utils/auth';
@@ -49,14 +50,7 @@ export default function App() {
       {!isAuthPage && (isPublicPage || !session ? <PublicNavbar session={session} /> : <Navbar session={session} onLogout={logout} />)}
       {error && <p role="alert" className="mx-auto max-w-6xl bg-red-50 p-3 text-red-700">{error}</p>}
       <Routes>
-        <Route path="/" element={(
-          <main className="mx-auto max-w-6xl px-6 py-24">
-            <p className="text-sm font-bold uppercase tracking-widest text-indigo-600">A little room to think</p>
-            <h1 className="mt-4 text-5xl font-extrabold tracking-tight text-slate-900 sm:text-6xl">WriteSpace.</h1>
-            <p className="mt-5 max-w-xl text-xl leading-8 text-slate-600">Your thoughts. Your space. Beautifully simple.</p>
-            <Link to={session ? '/blogs' : '/login'} className="mt-8 inline-block rounded-lg bg-indigo-600 px-5 py-3 font-semibold text-white hover:bg-indigo-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-600 focus-visible:outline-offset-2">Start Reading</Link>
-          </main>
-        )} />
+        <Route path="/" element={<LandingPage session={session} />} />
         <Route path="/login" element={<LoginPage session={session} onSession={setSession} />} />
         <Route path="/register" element={<RegisterPage session={session} onSession={setSession} />} />
         <Route path="/blogs" element={<ProtectedRoute session={session}><main className="mx-auto max-w-6xl px-6 py-16"><h1 className="text-3xl font-bold">All Blogs</h1><p className="mt-3 text-slate-600">Welcome, {session?.displayName}.</p></main></ProtectedRoute>} />
