@@ -42,6 +42,18 @@ describe('blog routes', () => {
     expect(screen.getByRole('heading', { name: 'Revised story' })).toBeInTheDocument();
     expect(JSON.parse(localStorage.getItem('writespace_posts'))[0].authorId).toBe('alice');
   });
+  it('renders markup in a stored title and body as inert text', () => {
+    const title = '<img src=x onerror="alert(1)">';
+    const content = '<script>window.injected = true</script><strong>not bold</strong>';
+    session();
+    seed([{ ...alicePost, title, content }]);
+    const { container } = show('/blog/alice-post');
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe(title);
+    expect(screen.getByText(content)).toBeInTheDocument();
+    const article = container.querySelector('article');
+    expect(article.querySelector('img, script, strong')).toBeNull();
+    expect(window.injected).toBeUndefined();
+  });
   it('prevents direct editing and hides actions for another author', () => {
     session(); seed([bobPost]); const view = show('/blog/bob-post');
     expect(screen.getByText('Bob text')).toBeInTheDocument();

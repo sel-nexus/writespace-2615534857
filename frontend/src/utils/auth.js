@@ -40,12 +40,13 @@ export function clearSession() {
 /** Return the home route for a role. */
 export function roleHome(role) { return role === 'admin' ? '/admin' : '/blogs'; }
 
-/** Normalize a username for uniqueness and login. */
-export function normalizeUsername(username) { return username.trim().toLowerCase(); }
+/** Normalize a username for uniqueness and login, returning empty for invalid input. */
+export function normalizeUsername(username) { return typeof username === 'string' ? username.trim().toLowerCase() : ''; }
 
 /** Authenticate credentials and persist a password-free session. */
 export function login(username, password) {
   const normalized = normalizeUsername(username);
+  if (!normalized || typeof password !== 'string' || !password.trim()) return { error: 'Invalid username or password.' };
   let session;
   if (normalized === 'admin' && password === 'admin') {
     session = ADMIN;
@@ -63,7 +64,9 @@ export function login(username, password) {
 }
 
 /** Validate and create a regular account, then establish its session. */
-export function register({ displayName, username, password, confirmPassword }) {
+export function register(fields) {
+  if (!fields || typeof fields !== 'object' || !['displayName', 'username', 'password', 'confirmPassword'].every((key) => typeof fields[key] === 'string')) return { error: 'All fields are required.' };
+  const { displayName, username, password, confirmPassword } = fields;
   const name = displayName.trim();
   const normalized = normalizeUsername(username);
   if (!name || !normalized || !password.trim() || !confirmPassword.trim()) return { error: 'All fields are required.' };

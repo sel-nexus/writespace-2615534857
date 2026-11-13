@@ -38,13 +38,22 @@ export default function AdminDashboard({ session }) {
         <h1 className="mt-2 text-3xl font-bold">Admin Dashboard</h1>
         <p className="mt-2 text-violet-100">Welcome, {session.displayName}.</p>
       </header>
-      {(posts.error || accounts.error || error) && <p role="alert" className="mt-6 rounded-lg bg-red-50 p-3 text-red-700">{error || posts.error || accounts.error}</p>}
+      {(posts.error || accounts.error || error) && <p
+        role="alert"
+        className="mt-6 rounded-lg bg-red-50 p-3 text-red-700"
+      >{error || posts.error || accounts.error}</p>}
       <section aria-label="Statistics" className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => <StatCard key={stat.label} {...stat} />)}
       </section>
       <div className="mt-8 flex flex-wrap gap-3">
-        <Link to="/write" className="rounded-lg bg-indigo-600 px-4 py-2 font-medium text-white hover:bg-indigo-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-600">Write New Post</Link>
-        <Link to="/users" className="rounded-lg border border-indigo-200 bg-white px-4 py-2 font-medium text-indigo-700 hover:bg-indigo-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-600">Manage Users</Link>
+        <Link
+          to="/write"
+          className="rounded-lg bg-indigo-600 px-4 py-2 font-medium text-white hover:bg-indigo-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-600"
+        >Write New Post</Link>
+        <Link
+          to="/users"
+          className="rounded-lg border border-indigo-200 bg-white px-4 py-2 font-medium text-indigo-700 hover:bg-indigo-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-600"
+        >Manage Users</Link>
       </div>
       <section className="mt-10" aria-labelledby="recent-posts">
         <h2 id="recent-posts" className="text-xl font-bold text-slate-900">Recent Posts</h2>
@@ -53,12 +62,24 @@ export default function AdminDashboard({ session }) {
             {posts.posts.slice(0, 5).map((post) => (
               <li key={post.id} className="flex flex-col gap-4 border-b border-slate-100 p-5 last:border-b-0 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0">
-                  <Link to={`/blog/${encodeURIComponent(post.id)}`} className="break-words font-semibold text-slate-900 hover:text-indigo-700">{post.title}</Link>
+                  <Link
+                    to={`/blog/${encodeURIComponent(post.id)}`}
+                    className="break-words font-semibold text-slate-900 hover:text-indigo-700"
+                  >{post.title}</Link>
                   <p className="mt-1 text-sm text-slate-500">{post.authorName || 'Unknown author'} · {formatPostDate(post.createdAt)}</p>
                 </div>
                 <div className="flex gap-3">
-                  <Link aria-label={`Edit ${post.title}`} to={`/edit/${encodeURIComponent(post.id)}`} className="rounded-lg border border-indigo-200 px-4 py-2 font-medium text-indigo-700 hover:bg-indigo-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-600">Edit</Link>
-                  <button type="button" aria-label={`Delete ${post.title}`} onClick={() => handleDelete(post)} className="rounded-lg border border-red-200 bg-red-50 px-4 py-2 font-medium text-red-700 hover:bg-red-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-red-600">Delete</button>
+                  <Link
+                    aria-label={`Edit ${post.title}`}
+                    to={`/edit/${encodeURIComponent(post.id)}`}
+                    className="rounded-lg border border-indigo-200 px-4 py-2 font-medium text-indigo-700 hover:bg-indigo-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-600"
+                  >Edit</Link>
+                  <button
+                    type="button"
+                    aria-label={`Delete ${post.title}`}
+                    onClick={() => handleDelete(post)}
+                    className="rounded-lg border border-red-200 bg-red-50 px-4 py-2 font-medium text-red-700 hover:bg-red-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-red-600"
+                  >Delete</button>
                 </div>
               </li>
             ))}

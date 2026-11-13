@@ -46,8 +46,14 @@ export default function LandingPage({ session }) {
               <h1 className="mt-5 text-5xl font-extrabold tracking-tight sm:text-6xl lg:text-7xl">WriteSpace.</h1>
               <p className="mt-6 max-w-lg text-xl leading-8 text-indigo-50 sm:text-2xl">Your thoughts. Your space. Beautifully simple.</p>
               <div className="mt-9 flex flex-wrap gap-3">
-                <Link to={session ? '/blogs' : '/login'} className="rounded-lg bg-white px-5 py-3 font-semibold text-indigo-700 shadow-sm hover:bg-indigo-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">Start Reading</Link>
-                <Link to="/register" className="rounded-lg border border-white px-5 py-3 font-semibold text-white hover:bg-indigo-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">Get Started Free</Link>
+                <Link
+                  to={session ? '/blogs' : '/login'}
+                  className="rounded-lg bg-white px-5 py-3 font-semibold text-indigo-700 shadow-sm hover:bg-indigo-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                >Start Reading</Link>
+                <Link
+                  to="/register"
+                  className="rounded-lg border border-white px-5 py-3 font-semibold text-white hover:bg-indigo-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                >Get Started Free</Link>
               </div>
             </div>
             <div className="mx-auto w-full max-w-md motion-safe:animate-bounce">
@@ -90,10 +96,22 @@ export default function LandingPage({ session }) {
         <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-10 sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <p>© {new Date().getFullYear()} WriteSpace. All rights reserved.</p>
           <nav aria-label="Footer navigation" className="flex flex-wrap gap-x-6 gap-y-3 text-sm font-medium">
-            <Link className="hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white" to="/">Home</Link>
-            <Link className="hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white" to="/blogs">All Blogs</Link>
-            <Link className="hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white" to="/login">Login</Link>
-            <Link className="hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white" to="/register">Register</Link>
+            <Link
+              className="hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              to="/"
+            >Home</Link>
+            <Link
+              className="hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              to="/blogs"
+            >All Blogs</Link>
+            <Link
+              className="hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              to="/login"
+            >Login</Link>
+            <Link
+              className="hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              to="/register"
+            >Register</Link>
           </nav>
         </div>
       </footer>

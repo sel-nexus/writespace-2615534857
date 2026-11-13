@@ -82,6 +82,18 @@ describe('public discovery', () => {
     expect(screen.getByText('Writer')).toBeInTheDocument();
   });
 
+  it('keeps a long signed-in name available and truncatable on small screens', () => {
+    const displayName = 'A very long signed-in display name';
+    localStorage.setItem('writespace_session', JSON.stringify({ userId: 'id', username: 'writer', displayName, role: 'user' }));
+    showLanding();
+    const nav = screen.getByRole('navigation', { name: 'Public navigation' });
+    const name = within(nav).getByText(displayName);
+    expect(name).toBeVisible();
+    expect(name).toHaveClass('truncate');
+    expect(name).not.toHaveClass('hidden');
+    expect(within(nav).getByRole('link', { name: 'Go to Dashboard' })).toHaveAttribute('href', '/blogs');
+  });
+
   it('refreshes the preview after another tab changes posts', () => {
     showLanding();
     localStorage.setItem('writespace_posts', JSON.stringify([post('new', 'From another tab', '2025-01-01T00:00:00Z')]));

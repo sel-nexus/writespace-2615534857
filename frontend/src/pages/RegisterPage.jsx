@@ -35,14 +35,30 @@ export default function RegisterPage({ session, onSession }) {
           {fields.map((field) => (
             <div key={field.key}>
               <label htmlFor={field.key} className="mb-1 block text-sm font-semibold text-slate-700">{field.label}</label>
-              <input id={field.key} type={field.type || 'text'} autoComplete={field.autoComplete} required aria-required="true" value={form[field.key]} onChange={(event) => setForm({ ...form, [field.key]: event.target.value })} className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200" />
+              <input
+                id={field.key}
+                type={field.type || 'text'}
+                autoComplete={field.autoComplete}
+                required
+                aria-required="true"
+                value={form[field.key]}
+                onChange={(event) => setForm({ ...form, [field.key]: event.target.value })}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+              />
             </div>
           ))}
           {error && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
-          <button type="submit" className="w-full rounded-lg bg-indigo-600 px-4 py-3 font-semibold text-white shadow-sm hover:bg-indigo-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-600 focus-visible:outline-offset-2">Register</button>
+          <button
+            type="submit"
+            className="w-full rounded-lg bg-indigo-600 px-4 py-3 font-semibold text-white shadow-sm hover:bg-indigo-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-600 focus-visible:outline-offset-2"
+          >Register</button>
         </form>
-        <p className="mt-6 text-sm text-slate-600">Already have an account? <Link to="/login" className="font-semibold text-indigo-700 underline underline-offset-2">Login</Link></p>
-        <p className="mt-6 border-t border-slate-100 pt-5 text-xs leading-5 text-slate-500">Local demo only: passwords are stored in plaintext and are not secure. Never use a real password.</p>
+        <p className="mt-6 text-sm text-slate-600">Already have an account? <Link
+          to="/login" className="font-semibold text-indigo-700 underline underline-offset-2"
+        >Login</Link></p>
+        <p
+          className="mt-6 border-t border-slate-100 pt-5 text-xs leading-5 text-slate-500"
+        >Local demo only: passwords are stored in plaintext and are not secure. Never use a real password.</p>
       </section>
     </main>
   );

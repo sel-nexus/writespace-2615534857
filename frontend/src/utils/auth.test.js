@@ -1,7 +1,7 @@
 /** Verify local account and session contracts. */
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { clearSession, getSession, login, register, roleHome, setSession } from './auth';
+import { clearSession, getSession, login, normalizeUsername, register, roleHome, setSession } from './auth';
 
 beforeEach(() => localStorage.clear());
 afterEach(() => vi.restoreAllMocks());
@@ -53,6 +53,70 @@ describe('local identity', () => {
     expect(register(form).error).toMatch(/storage/);
     expect(localStorage.getItem('writespace_users')).toBe('corrupt');
     expect(login('alice', 'demo').error).toMatch(/storage/);
+  });
+
+  it.each(['displayName', 'username', 'password', 'confirmPassword'])('rejects a missing %s without changing storage', (field) => {
+    const fields = { ...form };
+    delete fields[field];
+    localStorage.setItem('writespace_users', '[]');
+    localStorage.setItem('writespace_session', '{"previous":true}');
+    expect(register(fields)).toEqual({ error: 'All fields are required.' });
+    expect(localStorage.getItem('writespace_users')).toBe('[]');
+    expect(localStorage.getItem('writespace_session')).toBe('{"previous":true}');
+  });
+
+  it.each([null, undefined, 12, false, {}, []])('rejects malformed registration input %s without mutation', (fields) => {
+    expect(register(fields)).toEqual({ error: 'All fields are required.' });
+    expect(localStorage.getItem('writespace_users')).toBeNull();
+    expect(localStorage.getItem('writespace_session')).toBeNull();
+  });
+
+  it.each(['displayName', 'username', 'password', 'confirmPassword'])('rejects a non-string %s', (field) => {
+    expect(register({ ...form, [field]: 42 })).toEqual({ error: 'All fields are required.' });
+    expect(localStorage.getItem('writespace_users')).toBeNull();
+    expect(localStorage.getItem('writespace_session')).toBeNull();
+  });
+
+  it.each([[null, 'demo'], [42, 'demo'], ['alice', null], ['alice', 42], ['', 'demo']])('rejects malformed login credentials %# without mutation', (username, password) => {
+    localStorage.setItem('writespace_users', JSON.stringify([{ id: 'a', username: 'alice', displayName: 'Alice', role: 'user' }]));
+    localStorage.setItem('writespace_session', '{"previous":true}');
+    const users = localStorage.getItem('writespace_users');
+    expect(login(username, password)).toEqual({ error: 'Invalid username or password.' });
+    expect(localStorage.getItem('writespace_users')).toBe(users);
+    expect(localStorage.getItem('writespace_session')).toBe('{"previous":true}');
+  });
+
+  it('normalizes malformed usernames safely', () => {
+    expect(normalizeUsername(null)).toBe('');
+    expect(normalizeUsername(3)).toBe('');
+    expect(normalizeUsername(' ALICE ')).toBe('alice');
+  });
+
+  it('preserves the previous session when login cannot save a new session', () => {
+    localStorage.setItem('writespace_session', '{"previous":true}');
+    const beforeUsers = localStorage.getItem('writespace_users');
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('quota'); });
+    expect(login('admin', 'admin').error).toMatch(/storage/i);
+    expect(localStorage.getItem('writespace_session')).toBe('{"previous":true}');
+    expect(localStorage.getItem('writespace_users')).toBe(beforeUsers);
+  });
+
+  it('preserves users and session when registration cannot generate a UUID', () => {
+    localStorage.setItem('writespace_users', '[]');
+    localStorage.setItem('writespace_session', '{"previous":true}');
+    vi.spyOn(crypto, 'randomUUID').mockImplementation(() => { throw new Error('unavailable'); });
+    expect(register(form)).toEqual({ error: 'Unable to create an account in this browser.' });
+    expect(localStorage.getItem('writespace_users')).toBe('[]');
+    expect(localStorage.getItem('writespace_session')).toBe('{"previous":true}');
+  });
+
+  it('preserves users and session when the registration write fails', () => {
+    localStorage.setItem('writespace_users', '[]');
+    localStorage.setItem('writespace_session', '{"previous":true}');
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('quota'); });
+    expect(register(form).error).toMatch(/storage/i);
+    expect(localStorage.getItem('writespace_users')).toBe('[]');
+    expect(localStorage.getItem('writespace_session')).toBe('{"previous":true}');
   });
 
   it('explains a successful account write followed by failed session persistence', () => {

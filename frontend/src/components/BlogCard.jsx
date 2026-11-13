@@ -13,10 +13,17 @@ export function BlogCard({ post, index = 0, session }) {
   const excerpt = post.content.slice(0, 120);
 
   return (
-    <article className={`rounded-2xl border border-slate-200 border-t-4 bg-white shadow-sm ${borders[((index % borders.length) + borders.length) % borders.length]}`}>
-      <Link to={`/blog/${encodeURIComponent(post.id)}`} className="block h-full rounded-xl p-6 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+    <article
+      className={`rounded-2xl border border-slate-200 border-t-4 bg-white shadow-sm ${borders[((index % borders.length) + borders.length) % borders.length]}`}
+    >
+      <Link
+        to={`/blog/${encodeURIComponent(post.id)}`}
+        className="block h-full rounded-xl p-6 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+      >
         <p className="text-sm font-medium text-slate-600">
-          {validDate ? <time dateTime={post.createdAt}>{date.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric', timeZone: 'UTC' })}</time> : 'Date unavailable'}
+          {validDate ? <time
+            dateTime={post.createdAt}
+          >{date.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric', timeZone: 'UTC' })}</time> : 'Date unavailable'}
         </p>
         <h3 className="mt-3 break-words text-xl font-bold text-slate-900">{post.title}</h3>
         <p className="mt-3 break-words leading-7 text-slate-600">{excerpt}{post.content.length > 120 ? '…' : ''}</p>
@@ -26,11 +33,17 @@ export function BlogCard({ post, index = 0, session }) {
             <span>By {post.authorName}</span>
           </div>
         )}
-        <span className="mt-5 inline-block text-sm font-semibold text-indigo-700">Read post <span aria-hidden="true">→</span></span>
+        <span className="mt-5 inline-block text-sm font-semibold text-indigo-700">
+          Read post <span aria-hidden="true">→</span>
+        </span>
       </Link>
       {canManagePost(session, post) && (
         <div className="px-6 pb-6">
-          <Link to={`/edit/${encodeURIComponent(post.id)}`} aria-label={`Edit ${post.title}`} className="inline-block rounded-lg border border-indigo-200 px-4 py-2 font-medium text-indigo-700 hover:bg-indigo-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-600">Edit</Link>
+          <Link
+            to={`/edit/${encodeURIComponent(post.id)}`}
+            aria-label={`Edit ${post.title}`}
+            className="inline-block rounded-lg border border-indigo-200 px-4 py-2 font-medium text-indigo-700 hover:bg-indigo-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-600"
+          >Edit</Link>
         </div>
       )}
     </article>

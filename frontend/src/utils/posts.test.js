@@ -50,6 +50,45 @@ describe('posts', () => {
     expect(deletePost('one', admin).error).toMatch(/storage/i);
     expect(localStorage.getItem('writespace_posts')).toBe(raw);
   });
+  it.each([null, undefined, {}, { title: 1, content: 'Body' }, { title: 'Title', content: null }])('rejects malformed fields %# without changing posts', (fields) => {
+    seed([original]);
+    const before = localStorage.getItem('writespace_posts');
+    expect(Object.keys(savePost(fields, alice).errors).length).toBeGreaterThan(0);
+    expect(localStorage.getItem('writespace_posts')).toBe(before);
+  });
+  it.each([null, undefined, {}, { ...alice, role: 'owner' }, { ...alice, userId: '' }, { ...alice, displayName: '' }])('rejects invalid session %# for creation without changing posts', (session) => {
+    seed([original]);
+    const before = localStorage.getItem('writespace_posts');
+    expect(savePost({ title: 'Title', content: 'Body' }, session).error).toMatch(/signed in/i);
+    expect(localStorage.getItem('writespace_posts')).toBe(before);
+  });
+  it('preserves stored posts on missing and unauthorized edit and delete', () => {
+    seed([original, { id: 'malformed' }]);
+    const before = localStorage.getItem('writespace_posts');
+    expect(savePost({ title: 'X', content: 'Y' }, bob, 'one').error).toMatch(/cannot edit/i);
+    expect(deletePost('one', bob).error).toMatch(/cannot delete/i);
+    expect(deletePost('one', null).error).toMatch(/cannot delete/i);
+    expect(savePost({ title: 'X', content: 'Y' }, alice, 'missing').error).toMatch(/not found/i);
+    expect(savePost({ title: 'X', content: 'Y' }, alice, 'malformed').error).toMatch(/not found/i);
+    expect(deletePost('malformed', admin).error).toMatch(/not found/i);
+    expect(localStorage.getItem('writespace_posts')).toBe(before);
+  });
+  it('preserves posts when creation cannot generate a UUID', () => {
+    seed([original]);
+    const before = localStorage.getItem('writespace_posts');
+    vi.spyOn(crypto, 'randomUUID').mockImplementation(() => { throw new Error('unavailable'); });
+    expect(savePost({ title: 'Title', content: 'Body' }, alice)).toEqual({ error: 'Unable to create a post in this browser.' });
+    expect(localStorage.getItem('writespace_posts')).toBe(before);
+  });
+  it('preserves long title and content through creation and retrieval', () => {
+    const title = 'Long title '.repeat(1000);
+    const content = 'Long content with markup <b>not HTML</b>\n'.repeat(2000);
+    const result = savePost({ title, content }, alice);
+    expect(result.post.title).toBe(title.trim());
+    expect(result.post.content).toBe(content);
+    expect(findPost(result.post.id).post).toEqual(result.post);
+    expect(JSON.parse(localStorage.getItem('writespace_posts'))).toEqual([result.post]);
+  });
   it('reports read and write failures without changing stored data', () => {
     seed([original]);
     vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('quota'); });

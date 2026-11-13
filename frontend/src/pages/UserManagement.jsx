@@ -50,12 +50,26 @@ export default function UserManagement({ session }) {
           {fields.map((field) => (
             <div key={field.key}>
               <label htmlFor={field.key} className="mb-1 block text-sm font-semibold text-slate-700">{field.label}</label>
-              <input id={field.key} type={field.type || 'text'} autoComplete={field.autoComplete} required aria-required="true" value={form[field.key]} onChange={(event) => setForm({ ...form, [field.key]: event.target.value })} className="w-full rounded-lg border border-slate-300 px-3 py-2.5 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200" />
+              <input
+                id={field.key}
+                type={field.type || 'text'}
+                autoComplete={field.autoComplete}
+                required
+                aria-required="true"
+                value={form[field.key]}
+                onChange={(event) => setForm({ ...form, [field.key]: event.target.value })}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2.5 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+              />
             </div>
           ))}
           <div>
             <label htmlFor="role" className="mb-1 block text-sm font-semibold text-slate-700">Role</label>
-            <select id="role" value={form.role} onChange={(event) => setForm({ ...form, role: event.target.value })} className="w-full rounded-lg border border-slate-300 px-3 py-2.5 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200">
+            <select
+              id="role"
+              value={form.role}
+              onChange={(event) => setForm({ ...form, role: event.target.value })}
+              className="w-full rounded-lg border border-slate-300 px-3 py-2.5 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+            >
               <option value="user">user</option>
               <option value="admin">Admin</option>
             </select>
@@ -63,14 +77,38 @@ export default function UserManagement({ session }) {
           {(error || result.error) && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700 sm:col-span-2">{error || result.error}</p>}
           {notice && <p role="status" className="text-sm text-slate-700 sm:col-span-2">{notice}</p>}
           <div className="sm:col-span-2">
-            <button type="submit" className="rounded-lg bg-indigo-600 px-4 py-2 font-medium text-white hover:bg-indigo-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-600">Create Account</button>
+            <button
+              type="submit"
+              className="rounded-lg bg-indigo-600 px-4 py-2 font-medium text-white hover:bg-indigo-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-600"
+            >Create Account</button>
           </div>
         </form>
         <p className="mt-4 text-xs text-slate-500">Local demo only: passwords are stored in plaintext. Never use a real password.</p>
       </section>
       <section className="mt-10" aria-labelledby="accounts-heading">
         <h2 id="accounts-heading" className="text-xl font-bold">Accounts</h2>
-        <ul className="mt-4 overflow-hidden rounded-xl border border-slate-200 bg-white">
+        <div className="mt-4 hidden overflow-x-auto rounded-xl border border-slate-200 bg-white sm:block">
+          <table aria-labelledby="accounts-heading" className="w-full text-left">
+            <thead className="text-sm text-slate-600">
+              <tr>
+                <th scope="col" className="px-5 py-3">Account</th>
+                <th scope="col" className="px-5 py-3">Role</th>
+                <th scope="col" className="px-5 py-3">Created</th>
+                <th scope="col" className="px-5 py-3">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {result.accounts.map((account) => <UserRow
+                key={account.id}
+                account={account}
+                currentId={session.userId}
+                onDelete={handleDelete}
+                layout="table"
+              />)}
+            </tbody>
+          </table>
+        </div>
+        <ul aria-labelledby="accounts-heading" className="mt-4 overflow-hidden rounded-xl border border-slate-200 bg-white sm:hidden">
           {result.accounts.map((account) => <UserRow key={account.id} account={account} currentId={session.userId} onDelete={handleDelete} />)}
         </ul>
       </section>

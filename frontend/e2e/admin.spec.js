@@ -1,10 +1,79 @@
 /** Exercise the administration journey against browser-local data. */
 import { expect, test } from '@playwright/test';
 
-test('admin manages accounts and another writer’s posts while preserving retained content', async ({ page }) => {
+const browserErrors = new WeakMap();
+test.beforeEach(async ({ page }) => {
   const errors = [];
-  page.on('console', (message) => { if (message.type() === 'error') errors.push(message.text()); });
-  page.on('pageerror', (error) => errors.push(error.message));
+  browserErrors.set(page, errors);
+  page.on('console', (message) => { if (message.type() === 'error') errors.push(`console: ${message.text()}`); });
+  page.on('pageerror', (error) => errors.push(`pageerror: ${error.message}`));
+  page.on('requestfailed', (request) => errors.push(`requestfailed: ${request.method()} ${request.url()} ${request.failure()?.errorText}`));
+});
+test.afterEach(async ({ page }) => {
+  expect(browserErrors.get(page), 'browser errors and failed requests').toEqual([]);
+});
+
+test('admin writes a post with its own identity and it persists in the reader', async ({ page }) => {
+  await page.goto('/login');
+  await page.getByLabel('Username').fill('admin');
+  await page.getByLabel('Password').fill('admin');
+  await page.getByRole('button', { name: 'Login' }).click();
+  await expect(page).toHaveURL(/\/admin$/);
+  await page.getByRole('link', { name: 'Write New Post' }).click();
+  await page.getByLabel('Title').fill('An admin-owned story');
+  await page.getByLabel('Content').fill('Words from the administrator.');
+  await page.getByRole('button', { name: 'Save' }).click();
+  await expect(page).toHaveURL(/\/blog\/[^/]+$/);
+  const article = page.getByRole('article');
+  await expect(article.getByRole('heading', { name: 'An admin-owned story' })).toBeVisible();
+  await expect(article.getByText('Words from the administrator.')).toBeVisible();
+  await expect(article.getByText('Admin', { exact: true })).toBeVisible();
+  await expect(article.getByRole('link', { name: 'Edit', exact: true })).toBeVisible();
+  const savedPost = await page.evaluate(() => JSON.parse(localStorage.getItem('writespace_posts'))[0]);
+  expect(savedPost).toMatchObject({ title: 'An admin-owned story', content: 'Words from the administrator.', authorId: 'admin', authorName: 'Admin' });
+  await page.reload();
+  await expect(article.getByRole('heading', { name: 'An admin-owned story' })).toBeVisible();
+  await expect(article.getByText('Words from the administrator.')).toBeVisible();
+  await expect(article.getByText('Admin', { exact: true })).toBeVisible();
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('writespace_posts'))[0])).toEqual(savedPost);
+});
+
+test('account controls switch between desktop table and mobile cards', async ({ page }) => {
+  await page.setViewportSize({ width: 1024, height: 768 });
+  await page.goto('/login');
+  await page.getByLabel('Username').fill('admin');
+  await page.getByLabel('Password').fill('admin');
+  await page.getByRole('button', { name: 'Login' }).click();
+  await page.getByRole('link', { name: 'Manage Users' }).click();
+  await page.getByLabel('Display Name').fill('Responsive Writer');
+  await page.getByLabel('Username').fill('responsive');
+  await page.getByLabel('Password').fill('demo');
+  await page.getByRole('button', { name: 'Create Account' }).click();
+
+  const table = page.locator('table[aria-labelledby="accounts-heading"]');
+  const cards = page.locator('ul[aria-labelledby="accounts-heading"]');
+  await expect(table).toBeVisible();
+  await expect(cards).toBeHidden();
+  const desktopWriter = table.getByRole('row').filter({ hasText: '@responsive' });
+  await expect(desktopWriter.getByText('Responsive Writer')).toBeVisible();
+  await expect(desktopWriter.getByRole('button', { name: 'Delete responsive' })).toBeVisible();
+  await expect(desktopWriter.getByRole('button', { name: 'Delete responsive' })).toBeEnabled();
+  await expect(table.getByRole('button', { name: 'Delete admin' })).toBeVisible();
+  await expect(table.getByRole('button', { name: 'Delete admin' })).toBeDisabled();
+
+  await page.setViewportSize({ width: 375, height: 812 });
+  await expect(table).toBeHidden();
+  await expect(cards).toBeVisible();
+  const mobileWriter = cards.getByRole('listitem').filter({ hasText: '@responsive' });
+  await expect(mobileWriter.getByText('Responsive Writer')).toBeVisible();
+  await expect(mobileWriter.getByRole('button', { name: 'Delete responsive' })).toBeVisible();
+  await expect(mobileWriter.getByRole('button', { name: 'Delete responsive' })).toBeEnabled();
+  await expect(cards.getByRole('button', { name: 'Delete admin' })).toBeVisible();
+  await expect(cards.getByRole('button', { name: 'Delete admin' })).toBeDisabled();
+});
+
+test('admin manages accounts and another writer’s posts while preserving retained content', async ({ page }) => {
+  test.setTimeout(60000);
   await page.goto('/login');
   await page.getByLabel('Username').fill('admin');
   await page.getByLabel('Password').fill('admin');
@@ -16,7 +85,7 @@ test('admin manages accounts and another writer’s posts while preserving retai
   await page.getByLabel('Username').fill('writer');
   await page.getByLabel('Password').fill('demo');
   await page.getByRole('button', { name: 'Create Account' }).click();
-  await expect(page.getByText('@writer')).toBeVisible();
+  await expect(page.getByRole('table', { name: 'Accounts' }).getByText('@writer')).toBeVisible();
   await page.getByLabel('Display Name').fill('Another Admin');
   await page.getByLabel('Username').fill('WRITER');
   await page.getByLabel('Password').fill('demo');
@@ -25,26 +94,45 @@ test('admin manages accounts and another writer’s posts while preserving retai
   await expect(page.getByRole('alert')).toContainText('Username is already taken.');
   await page.getByLabel('Username').fill('editor');
   await page.getByRole('button', { name: 'Create Account' }).click();
-  await expect(page.getByText('@editor')).toBeVisible();
+  await expect(page.getByRole('table', { name: 'Accounts' }).getByText('@editor')).toBeVisible();
+  await page.getByRole('link', { name: 'Back to Dashboard' }).click();
+  await page.getByRole('link', { name: 'Write New Post' }).click();
+  await expect(page).toHaveURL(/\/write$/);
+  await page.getByLabel('Title').fill('Admin quick action draft');
+  await page.getByLabel('Content').fill('This draft is not saved');
+  const beforeCancel = await page.evaluate(() => localStorage.getItem('writespace_posts'));
+  await page.getByRole('button', { name: 'Cancel' }).click();
+  await expect(page).toHaveURL(/\/admin$/);
+  expect(await page.evaluate(() => localStorage.getItem('writespace_posts'))).toBe(beforeCancel);
+  await page.getByRole('link', { name: 'Manage Users' }).click();
   await page.reload();
-  await expect(page.getByText('@writer')).toBeVisible();
+  await expect(page.getByRole('table', { name: 'Accounts' }).getByText('@writer')).toBeVisible();
   await page.getByRole('button', { name: /Admin/ }).click();
   await page.getByRole('button', { name: 'Logout' }).click();
-  await page.goto('/login');
+  await page.getByRole('navigation', { name: 'Public navigation' }).getByRole('link', { name: 'Login' }).click();
+  await page.getByLabel('Username').fill('editor');
+  await page.getByLabel('Password').fill('demo');
+  await page.getByRole('button', { name: 'Login' }).click();
+  await expect(page.getByText('Welcome, Another Admin.')).toBeVisible();
+  await page.getByRole('link', { name: 'Manage Users' }).click();
+  await expect(page.getByRole('button', { name: 'Delete editor' })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Delete editor' })).toHaveAttribute('title', 'Your active account cannot be deleted.');
+  await expect(page.getByRole('button', { name: 'Delete admin' })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Delete writer' })).toBeEnabled();
+  await page.getByRole('button', { name: /Another Admin/ }).click();
+  await page.getByRole('button', { name: 'Logout' }).click();
+  await page.getByRole('navigation', { name: 'Public navigation' }).getByRole('link', { name: 'Login' }).click();
   await page.getByLabel('Username').fill('writer');
   await page.getByLabel('Password').fill('demo');
   await page.getByRole('button', { name: 'Login' }).click();
-  await page.goto('/admin');
   await expect(page).toHaveURL(/\/blogs$/);
-  await page.goto('/users');
-  await expect(page).toHaveURL(/\/blogs$/);
-  await page.goto('/write');
+  await page.getByRole('navigation', { name: 'Account navigation' }).getByRole('link', { name: 'Write', exact: true }).click();
   await page.getByLabel('Title').fill('Writer story');
   await page.getByLabel('Content').fill('Words that remain');
   await page.getByRole('button', { name: 'Save' }).click();
   await page.getByRole('button', { name: /Local Writer/ }).click();
   await page.getByRole('button', { name: 'Logout' }).click();
-  await page.goto('/login');
+  await page.getByRole('navigation', { name: 'Public navigation' }).getByRole('link', { name: 'Login' }).click();
   await page.getByLabel('Username').fill('admin');
   await page.getByLabel('Password').fill('admin');
   await page.getByRole('button', { name: 'Login' }).click();
@@ -52,14 +140,14 @@ test('admin manages accounts and another writer’s posts while preserving retai
   await page.getByRole('link', { name: 'Edit Writer story' }).click();
   await page.getByLabel('Title').fill('Revised writer story');
   await page.getByRole('button', { name: 'Save' }).click();
-  await page.goto('/users');
+  await page.getByRole('navigation', { name: 'Account navigation' }).getByRole('link', { name: 'Users' }).click();
   page.once('dialog', (dialog) => dialog.dismiss());
   await page.getByRole('button', { name: 'Delete writer' }).click();
-  await expect(page.getByText('@writer')).toBeVisible();
+  await expect(page.getByRole('table', { name: 'Accounts' }).getByText('@writer')).toBeVisible();
   page.once('dialog', (dialog) => dialog.accept());
   await page.getByRole('button', { name: 'Delete writer' }).click();
-  await expect(page.getByText('@writer')).toHaveCount(0);
-  await page.goto('/admin');
+  await expect(page.getByRole('table', { name: 'Accounts' }).getByText('@writer')).toHaveCount(0);
+  await page.getByRole('link', { name: 'Back to Dashboard' }).click();
   await expect(page.getByText('Revised writer story')).toBeVisible();
   page.once('dialog', (dialog) => dialog.dismiss());
   await page.getByRole('button', { name: 'Delete Revised writer story' }).click();
@@ -67,5 +155,4 @@ test('admin manages accounts and another writer’s posts while preserving retai
   page.once('dialog', (dialog) => dialog.accept());
   await page.getByRole('button', { name: 'Delete Revised writer story' }).click();
   await expect(page.getByText('No posts yet.')).toBeVisible();
-  expect(errors).toEqual([]);
 });

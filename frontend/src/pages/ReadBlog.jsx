@@ -44,8 +44,15 @@ export default function ReadBlog({ session }) {
           <div className="mt-8 whitespace-pre-wrap break-words text-lg leading-8 text-slate-700">{post.content}</div>
           {canManagePost(session, post) && (
             <div className="mt-10 flex flex-wrap gap-3">
-              <Link to={`/edit/${encodeURIComponent(post.id)}`} className="rounded-lg border border-indigo-200 px-4 py-2 font-medium text-indigo-700 hover:bg-indigo-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-600">Edit</Link>
-              <button type="button" onClick={handleDelete} className="rounded-lg border border-red-200 bg-red-50 px-4 py-2 font-medium text-red-700 hover:bg-red-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-red-600">Delete</button>
+              <Link
+                to={`/edit/${encodeURIComponent(post.id)}`}
+                className="rounded-lg border border-indigo-200 px-4 py-2 font-medium text-indigo-700 hover:bg-indigo-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-600"
+              >Edit</Link>
+              <button
+                type="button"
+                onClick={handleDelete}
+                className="rounded-lg border border-red-200 bg-red-50 px-4 py-2 font-medium text-red-700 hover:bg-red-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-red-600"
+              >Delete</button>
             </div>
           )}
           {error && <p role="alert" className="mt-4 text-red-700">{error}</p>}

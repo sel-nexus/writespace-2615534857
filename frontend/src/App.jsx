@@ -60,11 +60,20 @@ export default function App() {
         <Route path="/register" element={<RegisterPage session={session} onSession={setSession} />} />
         <Route path="/blogs" element={<ProtectedRoute session={session}><>{session && <Home session={session} />}</></ProtectedRoute>} />
         <Route path="/blog/:id" element={<ProtectedRoute session={session}><>{session && <ReadBlog session={session} />}</></ProtectedRoute>} />
-        <Route path="/write" element={<ProtectedRoute session={session}><>{session && <WriteBlog key={location.pathname} session={session} />}</></ProtectedRoute>} />
-        <Route path="/edit/:id" element={<ProtectedRoute session={session}><>{session && <WriteBlog key={location.pathname} session={session} />}</></ProtectedRoute>} />
+        <Route path="/write" element={
+          <ProtectedRoute session={session}><>{session && <WriteBlog key={location.pathname} session={session} />}</></ProtectedRoute>
+        } />
+        <Route path="/edit/:id" element={
+          <ProtectedRoute session={session}><>{session && <WriteBlog key={location.pathname} session={session} />}</></ProtectedRoute>
+        } />
         <Route path="/admin" element={<ProtectedRoute session={session} role="admin"><>{session && <AdminDashboard session={session} />}</></ProtectedRoute>} />
         <Route path="/users" element={<ProtectedRoute session={session} role="admin"><>{session && <UserManagement session={session} />}</></ProtectedRoute>} />
-        <Route path="*" element={<main className="mx-auto max-w-6xl px-6 py-16"><h1 className="text-3xl font-bold">Page not found</h1><Link to="/" className="mt-4 inline-block text-indigo-700 underline">Home</Link></main>} />
+        <Route path="*" element={
+          <main className="mx-auto max-w-6xl px-6 py-16">
+            <h1 className="text-3xl font-bold">Page not found</h1>
+            <Link to="/" className="mt-4 inline-block text-indigo-700 underline">Home</Link>
+          </main>
+        } />
       </Routes>
     </div>
   );

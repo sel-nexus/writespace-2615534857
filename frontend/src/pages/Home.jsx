@@ -22,7 +22,10 @@ export default function Home({ session }) {
           <h1 className="text-3xl font-bold tracking-tight text-slate-900">All Blogs</h1>
           <p className="mt-3 text-slate-600">Welcome, {session.displayName}.</p>
         </div>
-        <Link to="/write" className="rounded-lg bg-indigo-600 px-4 py-2 font-medium text-white hover:bg-indigo-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Write a post</Link>
+        <Link
+          to="/write"
+          className="rounded-lg bg-indigo-600 px-4 py-2 font-medium text-white hover:bg-indigo-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+        >Write a post</Link>
       </div>
       {result.error && <p role="alert" className="mt-8 text-red-700">{result.error}</p>}
       {result.posts.length ? (

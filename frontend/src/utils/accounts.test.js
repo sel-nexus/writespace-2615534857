@@ -44,6 +44,33 @@ describe('local accounts', () => {
     expect(listAccounts().accounts).toHaveLength(1);
     expect(JSON.parse(localStorage.getItem('writespace_posts'))).toEqual(posts);
   });
+  it.each(['displayName', 'username', 'password'])('rejects missing and malformed %s without changing users', (field) => {
+    localStorage.setItem('writespace_users', '[]');
+    const fields = { ...form };
+    delete fields[field];
+    expect(createAccount(fields, admin)).toEqual({ error: 'All fields are required.' });
+    expect(createAccount({ ...form, [field]: null }, admin)).toEqual({ error: 'All fields are required.' });
+    expect(localStorage.getItem('writespace_users')).toBe('[]');
+  });
+  it.each([null, undefined, {}, { role: 'admin' }, { role: 'user', userId: 'u' }])('rejects invalid administrator session %# without changing users', (session) => {
+    localStorage.setItem('writespace_users', '[]');
+    expect(createAccount(form, session).error).toMatch(/administrators/i);
+    expect(deleteAccount('existing', session).error).toMatch(/administrators/i);
+    expect(localStorage.getItem('writespace_users')).toBe('[]');
+  });
+  it('preserves users when account creation cannot generate a UUID', () => {
+    localStorage.setItem('writespace_users', '[]');
+    vi.spyOn(crypto, 'randomUUID').mockImplementation(() => { throw new Error('unavailable'); });
+    expect(createAccount(form, admin)).toEqual({ error: 'Unable to create an account in this browser.' });
+    expect(localStorage.getItem('writespace_users')).toBe('[]');
+  });
+  it('preserves users when deletion cannot be saved', () => {
+    const account = createAccount(form, admin).account;
+    const before = localStorage.getItem('writespace_users');
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('quota'); });
+    expect(deleteAccount(account.id, admin).error).toMatch(/storage/i);
+    expect(localStorage.getItem('writespace_users')).toBe(before);
+  });
   it('preserves corrupt data and reports storage write failures', () => {
     localStorage.setItem('writespace_users', 'invalid');
     expect(listAccounts().error).toMatch(/storage/i);

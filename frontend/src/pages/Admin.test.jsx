@@ -49,12 +49,51 @@ describe('administration', () => {
     expect(JSON.parse(localStorage.getItem('writespace_posts'))).toEqual([]);
     expect(confirm).toHaveBeenCalledTimes(3);
   });
+  it('shows scoped desktop table headers and equivalent stacked mobile account cards', () => {
+    localStorage.setItem('writespace_users', JSON.stringify([writer, editor]));
+    show('/users');
+    const table = screen.getByRole('table', { name: 'Accounts' });
+    expect(table.closest('div')).toHaveClass('hidden', 'sm:block');
+    for (const label of ['Account', 'Role', 'Created', 'Actions']) {
+      expect(within(table).getByRole('columnheader', { name: label })).toHaveAttribute('scope', 'col');
+    }
+    const row = within(table).getByRole('row', { name: /Writer.*@writer/ });
+    expect(within(row).getByRole('cell', { name: /user/i })).toBeInTheDocument();
+    expect(within(row).getByRole('cell', { name: /Jan 01, 2024/i })).toBeInTheDocument();
+    expect(within(row).getByRole('button', { name: 'Delete writer' })).toBeEnabled();
+    expect(within(table).getByRole('button', { name: 'Delete admin' })).toBeDisabled();
+    const cards = screen.getByRole('list', { name: 'Accounts' });
+    expect(cards).toHaveClass('sm:hidden');
+    const card = within(cards).getAllByRole('listitem').find((item) => item.textContent.includes('@writer'));
+    expect(card).toHaveTextContent('Writer');
+    expect(card).toHaveTextContent('user');
+    expect(card).toHaveTextContent('Jan 01, 2024');
+    expect(within(card).getByRole('button', { name: 'Delete writer' })).toBeEnabled();
+    expect(within(cards).getByRole('button', { name: 'Delete admin' })).toBeDisabled();
+  });
+  it('confirms deletion from the desktop table and keeps posts', async () => {
+    localStorage.setItem('writespace_users', JSON.stringify([writer]));
+    localStorage.setItem('writespace_posts', JSON.stringify([{ id: 'p', authorId: 'writer', title: 'Story', content: 'text' }]));
+    vi.spyOn(window, 'confirm').mockReturnValueOnce(false).mockReturnValueOnce(true);
+    const user = userEvent.setup();
+    show('/users');
+    const table = screen.getByRole('table', { name: 'Accounts' });
+    await user.click(within(table).getByRole('button', { name: 'Delete writer' }));
+    expect(within(table).getByText('@writer')).toBeInTheDocument();
+    expect(window.confirm).toHaveBeenCalledWith('Delete account writer? Their posts will remain.');
+    await user.click(within(table).getByRole('button', { name: 'Delete writer' }));
+    expect(within(table).queryByText('@writer')).not.toBeInTheDocument();
+    expect(within(screen.getByRole('list', { name: 'Accounts' })).queryByText('@writer')).not.toBeInTheDocument();
+    expect(JSON.parse(localStorage.getItem('writespace_posts'))).toHaveLength(1);
+    expect(screen.getByRole('status')).toHaveTextContent('Account deleted. Their posts remain.');
+  });
   it('creates both roles, rejects duplicates, and protects accounts while retaining posts', async () => {
     localStorage.setItem('writespace_users', JSON.stringify([writer]));
     localStorage.setItem('writespace_posts', JSON.stringify([{ id: 'p', authorId: 'writer', authorName: 'Writer', title: 'Story', content: 'text' }]));
     const user = userEvent.setup(); const confirm = vi.spyOn(window, 'confirm').mockReturnValueOnce(false).mockReturnValueOnce(true);
     show('/users');
-    expect(screen.getByRole('button', { name: 'Delete admin' })).toBeDisabled();
+    const cards = screen.getByRole('list', { name: 'Accounts' });
+    expect(within(cards).getByRole('button', { name: 'Delete admin' })).toBeDisabled();
     await user.click(screen.getByRole('button', { name: 'Create Account' }));
     expect(screen.getByRole('alert')).toHaveTextContent(/required/i);
     await user.type(screen.getByLabelText('Display Name'), 'New Editor');
@@ -68,9 +107,9 @@ describe('administration', () => {
     await user.click(screen.getByRole('button', { name: 'Create Account' }));
     expect(screen.getByRole('status')).toHaveTextContent('Account created.');
     expect(JSON.parse(localStorage.getItem('writespace_users')).find((account) => account.username === 'neweditor').role).toBe('admin');
-    await user.click(screen.getByRole('button', { name: 'Delete writer' }));
-    expect(screen.getByText('@writer')).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Delete writer' }));
+    await user.click(within(cards).getByRole('button', { name: 'Delete writer' }));
+    expect(within(cards).getByText('@writer')).toBeInTheDocument();
+    await user.click(within(cards).getByRole('button', { name: 'Delete writer' }));
     expect(screen.queryByText('@writer')).not.toBeInTheDocument();
     expect(JSON.parse(localStorage.getItem('writespace_posts'))).toHaveLength(1);
     expect(confirm).toHaveBeenCalledTimes(2);
@@ -78,7 +117,8 @@ describe('administration', () => {
   it('disables the active administrator and reports account storage failure', async () => {
     localStorage.setItem('writespace_users', JSON.stringify([editor]));
     const user = userEvent.setup(); show('/users', { userId: 'editor', username: 'editor', displayName: 'Editor', role: 'admin' });
-    expect(screen.getByRole('button', { name: 'Delete editor' })).toBeDisabled();
+    expect(within(screen.getByRole('list', { name: 'Accounts' })).getByRole('button', { name: 'Delete editor' })).toBeDisabled();
+    expect(within(screen.getByRole('table', { name: 'Accounts' })).getByRole('button', { name: 'Delete editor' })).toBeDisabled();
     await user.type(screen.getByLabelText('Display Name'), 'Another');
     await user.type(screen.getByLabelText('Username'), 'another');
     await user.type(screen.getByLabelText('Password'), 'demo');
