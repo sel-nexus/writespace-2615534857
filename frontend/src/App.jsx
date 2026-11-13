@@ -1,0 +1,72 @@
+/** Assemble identity routes and temporary destinations for later feature slices. */
+import { useEffect, useState } from 'react';
+import { Link, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
+import { Navbar } from './components/Navbar';
+import { ProtectedRoute } from './components/ProtectedRoute';
+import { PublicNavbar } from './components/PublicNavbar';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
+import { clearSession, getSession } from './utils/auth';
+
+/** Render identity flows with session state shared through props. */
+export default function App() {
+  const [session, setSession] = useState(getSession);
+  const [error, setError] = useState('');
+  const [logoutPending, setLogoutPending] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
+  useEffect(() => {
+    /** Refresh local identity after another tab changes storage. */
+    function handleStorage(event) {
+      if (event.key === 'writespace_session' || event.key === null) setSession(getSession());
+    }
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, []);
+
+  useEffect(() => {
+    if (logoutPending && location.pathname === '/') {
+      setSession(null);
+      setLogoutPending(false);
+    }
+  }, [logoutPending, location.pathname]);
+
+  /** Clear persisted identity before returning to the public page. */
+  function logout() {
+    if (!clearSession()) {
+      setError('Unable to clear the session. Please check your browser storage settings.');
+      return;
+    }
+    setError('');
+    setLogoutPending(true);
+    navigate('/');
+  }
+
+  const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
+  const isPublicPage = location.pathname === '/';
+  return (
+    <div className="min-h-screen bg-slate-50 text-slate-800">
+      {!isAuthPage && (isPublicPage || !session ? <PublicNavbar session={session} /> : <Navbar session={session} onLogout={logout} />)}
+      {error && <p role="alert" className="mx-auto max-w-6xl bg-red-50 p-3 text-red-700">{error}</p>}
+      <Routes>
+        <Route path="/" element={(
+          <main className="mx-auto max-w-6xl px-6 py-24">
+            <p className="text-sm font-bold uppercase tracking-widest text-indigo-600">A little room to think</p>
+            <h1 className="mt-4 text-5xl font-extrabold tracking-tight text-slate-900 sm:text-6xl">WriteSpace.</h1>
+            <p className="mt-5 max-w-xl text-xl leading-8 text-slate-600">Your thoughts. Your space. Beautifully simple.</p>
+            <Link to={session ? '/blogs' : '/login'} className="mt-8 inline-block rounded-lg bg-indigo-600 px-5 py-3 font-semibold text-white hover:bg-indigo-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-600 focus-visible:outline-offset-2">Start Reading</Link>
+          </main>
+        )} />
+        <Route path="/login" element={<LoginPage session={session} onSession={setSession} />} />
+        <Route path="/register" element={<RegisterPage session={session} onSession={setSession} />} />
+        <Route path="/blogs" element={<ProtectedRoute session={session}><main className="mx-auto max-w-6xl px-6 py-16"><h1 className="text-3xl font-bold">All Blogs</h1><p className="mt-3 text-slate-600">Welcome, {session?.displayName}.</p></main></ProtectedRoute>} />
+        <Route path="/blog/:id" element={<ProtectedRoute session={session}><main className="mx-auto max-w-6xl px-6 py-16"><h1 className="text-3xl font-bold">Blog reader</h1><p className="mt-3 text-slate-600">The reader is coming soon.</p></main></ProtectedRoute>} />
+        <Route path="/write" element={<ProtectedRoute session={session}><main className="mx-auto max-w-6xl px-6 py-16"><h1 className="text-3xl font-bold">Write</h1><p className="mt-3 text-slate-600">The editor is coming soon.</p></main></ProtectedRoute>} />
+        <Route path="/edit/:id" element={<ProtectedRoute session={session}><main className="mx-auto max-w-6xl px-6 py-16"><h1 className="text-3xl font-bold">Edit</h1><p className="mt-3 text-slate-600">The editor is coming soon.</p></main></ProtectedRoute>} />
+        <Route path="/admin" element={<ProtectedRoute session={session} role="admin"><main className="mx-auto max-w-6xl px-6 py-16"><h1 className="text-3xl font-bold">Admin Dashboard</h1><p className="mt-3 text-slate-600">Welcome, {session?.displayName}.</p></main></ProtectedRoute>} />
+        <Route path="/users" element={<ProtectedRoute session={session} role="admin"><main className="mx-auto max-w-6xl px-6 py-16"><h1 className="text-3xl font-bold">Users</h1><p className="mt-3 text-slate-600">User management is coming soon.</p></main></ProtectedRoute>} />
+        <Route path="*" element={<main className="mx-auto max-w-6xl px-6 py-16"><h1 className="text-3xl font-bold">Page not found</h1><Link to="/" className="mt-4 inline-block text-indigo-700 underline">Home</Link></main>} />
+      </Routes>
+    </div>
+  );
+}
