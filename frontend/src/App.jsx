@@ -5,6 +5,8 @@ import { Navbar } from './components/Navbar';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { PublicNavbar } from './components/PublicNavbar';
 import LandingPage from './pages/LandingPage';
+import AdminDashboard from './pages/AdminDashboard';
+import UserManagement from './pages/UserManagement';
 import Home from './pages/Home';
 import ReadBlog from './pages/ReadBlog';
 import WriteBlog from './pages/WriteBlog';
@@ -60,8 +62,8 @@ export default function App() {
         <Route path="/blog/:id" element={<ProtectedRoute session={session}><>{session && <ReadBlog session={session} />}</></ProtectedRoute>} />
         <Route path="/write" element={<ProtectedRoute session={session}><>{session && <WriteBlog key={location.pathname} session={session} />}</></ProtectedRoute>} />
         <Route path="/edit/:id" element={<ProtectedRoute session={session}><>{session && <WriteBlog key={location.pathname} session={session} />}</></ProtectedRoute>} />
-        <Route path="/admin" element={<ProtectedRoute session={session} role="admin"><main className="mx-auto max-w-6xl px-6 py-16"><h1 className="text-3xl font-bold">Admin Dashboard</h1><p className="mt-3 text-slate-600">Welcome, {session?.displayName}.</p></main></ProtectedRoute>} />
-        <Route path="/users" element={<ProtectedRoute session={session} role="admin"><main className="mx-auto max-w-6xl px-6 py-16"><h1 className="text-3xl font-bold">Users</h1><p className="mt-3 text-slate-600">User management is coming soon.</p></main></ProtectedRoute>} />
+        <Route path="/admin" element={<ProtectedRoute session={session} role="admin"><>{session && <AdminDashboard session={session} />}</></ProtectedRoute>} />
+        <Route path="/users" element={<ProtectedRoute session={session} role="admin"><>{session && <UserManagement session={session} />}</></ProtectedRoute>} />
         <Route path="*" element={<main className="mx-auto max-w-6xl px-6 py-16"><h1 className="text-3xl font-bold">Page not found</h1><Link to="/" className="mt-4 inline-block text-indigo-700 underline">Home</Link></main>} />
       </Routes>
     </div>
