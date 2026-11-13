@@ -5,6 +5,9 @@ import { Navbar } from './components/Navbar';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { PublicNavbar } from './components/PublicNavbar';
 import LandingPage from './pages/LandingPage';
+import Home from './pages/Home';
+import ReadBlog from './pages/ReadBlog';
+import WriteBlog from './pages/WriteBlog';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import { clearSession, getSession } from './utils/auth';
@@ -53,10 +56,10 @@ export default function App() {
         <Route path="/" element={<LandingPage session={session} />} />
         <Route path="/login" element={<LoginPage session={session} onSession={setSession} />} />
         <Route path="/register" element={<RegisterPage session={session} onSession={setSession} />} />
-        <Route path="/blogs" element={<ProtectedRoute session={session}><main className="mx-auto max-w-6xl px-6 py-16"><h1 className="text-3xl font-bold">All Blogs</h1><p className="mt-3 text-slate-600">Welcome, {session?.displayName}.</p></main></ProtectedRoute>} />
-        <Route path="/blog/:id" element={<ProtectedRoute session={session}><main className="mx-auto max-w-6xl px-6 py-16"><h1 className="text-3xl font-bold">Blog reader</h1><p className="mt-3 text-slate-600">The reader is coming soon.</p></main></ProtectedRoute>} />
-        <Route path="/write" element={<ProtectedRoute session={session}><main className="mx-auto max-w-6xl px-6 py-16"><h1 className="text-3xl font-bold">Write</h1><p className="mt-3 text-slate-600">The editor is coming soon.</p></main></ProtectedRoute>} />
-        <Route path="/edit/:id" element={<ProtectedRoute session={session}><main className="mx-auto max-w-6xl px-6 py-16"><h1 className="text-3xl font-bold">Edit</h1><p className="mt-3 text-slate-600">The editor is coming soon.</p></main></ProtectedRoute>} />
+        <Route path="/blogs" element={<ProtectedRoute session={session}><>{session && <Home session={session} />}</></ProtectedRoute>} />
+        <Route path="/blog/:id" element={<ProtectedRoute session={session}><>{session && <ReadBlog session={session} />}</></ProtectedRoute>} />
+        <Route path="/write" element={<ProtectedRoute session={session}><>{session && <WriteBlog key={location.pathname} session={session} />}</></ProtectedRoute>} />
+        <Route path="/edit/:id" element={<ProtectedRoute session={session}><>{session && <WriteBlog key={location.pathname} session={session} />}</></ProtectedRoute>} />
         <Route path="/admin" element={<ProtectedRoute session={session} role="admin"><main className="mx-auto max-w-6xl px-6 py-16"><h1 className="text-3xl font-bold">Admin Dashboard</h1><p className="mt-3 text-slate-600">Welcome, {session?.displayName}.</p></main></ProtectedRoute>} />
         <Route path="/users" element={<ProtectedRoute session={session} role="admin"><main className="mx-auto max-w-6xl px-6 py-16"><h1 className="text-3xl font-bold">Users</h1><p className="mt-3 text-slate-600">User management is coming soon.</p></main></ProtectedRoute>} />
         <Route path="*" element={<main className="mx-auto max-w-6xl px-6 py-16"><h1 className="text-3xl font-bold">Page not found</h1><Link to="/" className="mt-4 inline-block text-indigo-700 underline">Home</Link></main>} />

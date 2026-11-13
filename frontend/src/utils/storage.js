@@ -32,6 +32,8 @@ function writeArray(key, value) {
 
 /** Return posts or an empty fallback. */
 export function getPosts() { return readArray('writespace_posts').value; }
+/** Return posts with read status, so mutations cannot overwrite corrupt storage. */
+export function readPosts() { return readArray('writespace_posts'); }
 /** Persist posts and return whether the write succeeded. */
 export function savePosts(posts) { return writeArray('writespace_posts', posts); }
 /** Return users or an empty fallback. */
